@@ -280,7 +280,6 @@
         bar.id = 'old-jvc-bar-v22';
         bar.innerHTML = `
             <a href="${forumUrl}" class="btn-jvc-v22">\u00AB Liste des sujets</a>
-            <a href="#forums-post-message-editor" class="btn-jvc-v22">\u21A9 R\u00E9pondre</a>
             <a href="${forumUrl}#forums-post-topic-editor" class="btn-jvc-v22">\u270F Nouveau sujet</a>
             <a href="javascript:location.reload();" class="btn-jvc-v22">Actualiser</a>
             <button id="jvmerde-toggle" class="btn-jvc-v22">\u27F3 Auto ON</button>
