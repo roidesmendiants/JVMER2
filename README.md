@@ -1,7 +1,6 @@
 # JVMERDE 
 
-Big S/O aux kheys **BlackArch**, **Bakuredo**, **StrangerFruit** et **herolink**.
-
+Big S/O aux kheys **BlackArch**, **Bakuredo**, **StrangerFruit**, **captain_cid31**, **herolink** et tous les débuggueurs du topic :ange: 
 
 # Guide de modification
 
