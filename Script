@@ -2,7 +2,7 @@
 // @name         JVMERDE5
 // @namespace    http://tampermonkey.net/
 // @version      25.10
-// @author       BlackArch + Bakuredo + StrangerFruit + herolink
+// @author       BlackArch + Bakuredo + StrangerFruit + captain_cid31 + herolink + Can-02
 // @description  Bandeau fixe, Clic Molette, Boutons bas, Auto-refresh, Stickers, Pagination, Dezoom, Sidebar, Citation pseudo
 // @match        https://www.jeuxvideo.com/forums/0-*
 // @match        https://www.jeuxvideo.com/forums/42-*
@@ -362,119 +362,29 @@
 })();
 
 
+
 // ═══════════════════════════════════════════════════
-// CITATION AVEC PSEUDO — par herolink
+// CITATION AVEC PSEUDO — par captain_cid31 & can-02 & herolink
 // ═══════════════════════════════════════════════════
-(function() {
-    'use strict';
+function Citations() {
+    document.addEventListener('click', function(e) {
+        const boutonCitation = e.target.closest('.messageUser__action[title="Citer le message"]');
+        if (!boutonCitation) return;
 
-    function reverseMessage(node, isInit, isUl) {
-        let quote = '';
-        let startsWithSpoil = false;
-
-        for (let child of node.childNodes) {
-            let name = child.nodeName;
-            switch (name) {
-                case 'P': case 'UL': case 'OL': case 'PRE': {
-                    let content = reverseMessage(child, false, (name === 'UL')).trim();
-                    if (content) quote += content + '\n\n';
-                    break;
-                }
-                case 'LI':
-                    quote += (isUl === true ? '* ' : '# ') + reverseMessage(child).trim() + '\n';
-                    break;
-                case 'STRONG': quote += "'''" + reverseMessage(child) + "'''"; break;
-                case 'U':      quote += '<u>' + reverseMessage(child) + '</u>'; break;
-                case 'S':      quote += '<s>' + reverseMessage(child) + '</s>'; break;
-                case 'EM':     quote += "''" + reverseMessage(child) + "''"; break;
-                case 'BR':     quote += '\n'; break;
-                case 'DIV': case 'SPAN': {
-                    let classList = child.classList;
-                    if (classList.contains('message__spoil')) {
-                        if (quote === '') startsWithSpoil = true;
-                        let sep = classList.contains('message__spoil--inline') ? '' : '\n\n';
-                        quote += '<spoil>' + reverseMessage(child).trim() + '</spoil>' + sep;
-                    } else if (classList.contains('message__spoilContent')) {
-                        quote += reverseMessage(child);
-                    } else if (classList.contains('message__noBlankline')) {
-                        quote += reverseMessage(child) + '\n';
-                    }
-                    break;
-                }
-                case 'LABEL': break;
-                case 'INPUT': break;
-                case 'IMG': {
-                    quote += (child.title || child.alt || '') + ' ';
-                    break;
-                }
-                case 'A': {
-                    quote += (child.href || reverseMessage(child)) + ' ';
-                    break;
-                }
-                case 'CODE': quote += '<code>' + child.textContent + '</code>'; break;
-                case 'BLOCKQUOTE': {
-                    quote = quote.trimEnd() + '\n' + reverseMessage(child).trim().replace(/^/gm, '> ') + '\n\n';
-                    break;
-                }
-                case '#text': {
-                    let txt = child.textContent;
-                    if (txt.replace(/\s/g, '').length > 0) quote += txt;
-                    break;
-                }
-            }
-        }
-
-        quote = quote.trim();
-        if (isInit) {
-            quote = quote.replace(/^/gm, '> ');
-            quote = quote.replace(/^> \s+$/gm, '>');
-            if (startsWithSpoil) quote = '>\n' + quote;
-        }
-        return quote;
-    }
-
-    async function intercepterCitation(e) {
-        const btn = e.target.closest('.icon-quotes') ||
-            (e.target.classList && e.target.classList.contains('messageUser__action') && e.target.title === 'Citer le message');
-        if (!btn) return;
-
+        e.stopImmediatePropagation();
         e.preventDefault();
-        e.stopPropagation();
 
-        const card = btn.closest('.messageUser__card');
-        const pseudo = card.querySelector('.messageUser__label').textContent.trim();
-        const date   = card.querySelector('.messageUser__date').textContent.trim();
-        const msgContent = card.querySelector('.messageUser__msg');
-        let quotedText = reverseMessage(msgContent, true);
-        let finalQuote = `> Le ${date} '''${pseudo}''' a écrit :\n${quotedText}\n\n`;
+        const post = boutonCitation.closest(".messageUser__card");
 
-        let textarea = document.querySelector('#message_reponse');
-        if (!textarea) {
-            const btnOuvrir = document.querySelector('.js-post-message, .btn-post-message');
-            if (btnOuvrir) {
-                btnOuvrir.click();
-                for (let i = 0; i < 20; i++) {
-                    await new Promise(r => setTimeout(r, 50));
-                    textarea = document.querySelector('#message_reponse');
-                    if (textarea) break;
-                }
-            }
-        }
+        const fiberKey = Object.keys(boutonCitation).find(k => k.startsWith('__reactFiber$'));
+        const props = boutonCitation[fiberKey]?.return?.memoizedProps;
 
-        if (textarea) {
-            const start = textarea.selectionStart;
-            const end   = textarea.selectionEnd;
-            const fullText = textarea.value.substring(0, start) + finalQuote + textarea.value.substring(end);
-            const nativeSetter = Object.getOwnPropertyDescriptor(window.HTMLTextAreaElement.prototype, 'value').set;
-            nativeSetter.call(textarea, fullText);
-            textarea.dispatchEvent(new Event('input',  { bubbles: true }));
-            textarea.dispatchEvent(new Event('change', { bubbles: true }));
-            textarea.focus();
-            textarea.setSelectionRange(start + finalQuote.length, start + finalQuote.length);
-            textarea.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }
+        const pseudo = post.querySelector(".messageUser__label")?.textContent.trim();
 
-    document.addEventListener('click', intercepterCitation, true);
+        const citation = `> Le ${props.date} '''${pseudo}''' a écrit :\n> ${props.text.split("\n").join("\n> ")}\n\n`;
 
-})();
+        unsafeWindow.jvc.getMessageEditor(".messageEditor__edit").insertText(citation);
+    }, true);
+}
+
+Citations();
